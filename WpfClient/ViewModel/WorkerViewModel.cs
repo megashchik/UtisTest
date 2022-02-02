@@ -75,7 +75,9 @@ namespace WpfClient.ViewModel
                     case Utis.WorkerIntegration.State.Update:
                         if (Workers.Contains(info.Worker))
                         {
-                            Workers.Remove(info.Worker);
+                            var removeIndex = Workers.IndexOf(info.Worker);
+                            Workers[removeIndex].ToLocal();
+                            Workers.RemoveAt(removeIndex);
                             Workers.Add(info.Worker);
                         }
                         else
