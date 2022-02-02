@@ -15,6 +15,7 @@ namespace WpfClient.ViewModel
 {
     internal class WorkerViewModel
     {
+        object lockObject = new object();
         WorkerModel Model { get; } = new WorkerModel();
         public Worker SelectedWorker { get; set; } = null!;
         public int SelectedIndex { get; set; }
@@ -57,8 +58,12 @@ namespace WpfClient.ViewModel
 
         void EditWorker(Worker worker)
         {
-            Model.Update(worker);
-            Workers.Remove(worker);
+            lock(lockObject)
+            {
+                Model.Update(worker);
+                worker.ToLocal();
+                Workers.Remove(worker);
+            }
         }
 
         void RemoveWorker(Worker worker)
@@ -70,26 +75,29 @@ namespace WpfClient.ViewModel
         {
             await foreach (var info in Model.GetWorkersAsync())
             {
-                switch(info.State)
+                lock(lockObject)
                 {
-                    case Utis.WorkerIntegration.State.Update:
-                        if (Workers.Contains(info.Worker))
-                        {
-                            var removeIndex = Workers.IndexOf(info.Worker);
-                            Workers[removeIndex].ToLocal();
-                            Workers.RemoveAt(removeIndex);
-                            Workers.Add(info.Worker);
-                        }
-                        else
-                        {
-                            Workers.Add(info.Worker);
-                        }
-                        break;
-                    case Utis.WorkerIntegration.State.Remove:
-                        var index = Workers.IndexOf(info.Id);
-                        Workers[index].ToLocal();
-                        Workers.RemoveAt(index);
-                        break;
+                    switch (info.State)
+                    {
+                        case Utis.WorkerIntegration.State.Update:
+                            if (Workers.Contains(info.Worker))
+                            {
+                                var removeIndex = Workers.IndexOf(info.Worker);
+                                Workers[removeIndex].ToLocal();
+                                Workers.RemoveAt(removeIndex);
+                                Workers.Add(info.Worker);
+                            }
+                            else
+                            {
+                                Workers.Add(info.Worker);
+                            }
+                            break;
+                        case Utis.WorkerIntegration.State.Remove:
+                            var index = Workers.IndexOf(info.Id);
+                            Workers[index].ToLocal();
+                            Workers.RemoveAt(index);
+                            break;
+                    }
                 }
             }
         }
