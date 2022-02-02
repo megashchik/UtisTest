@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option csharp_namespace = "Utis.WorkerIntegration.Server";
+
+service WorkerIntegration {
+	rpc GetWeatherStream (EmptyMessage) returns (stream WorkerInfoMessage);
+	rpc UpdateWorker(WorkerInfoMessage) returns (EmptyMessage);
+}
+
+message EmptyMessage
+{
+}
+
+message WorkerInfoMessage
+{
+	State State = 1;
+	oneof info {
+		WorkerMessage Worker = 2;
+		int32 Id = 3;
+	}
+}
+
+message WorkerMessage
+{
+	int32 Id = 1;
+	string LastName = 2;
+	string FirstName = 3;
+	string MiddleName = 4;
+	int64 Birthday = 5;
+	Sex Sex = 6;
+	bool HaveChildren = 7;
+}
+
+//Пол
+enum Sex {
+	Default = 0;
+	Male = 1;
+	Female = 2;
+}
+
+enum State {
+	Update = 0;
+	Remove = 1;
+}
